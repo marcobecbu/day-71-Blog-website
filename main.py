@@ -1,5 +1,5 @@
 from datetime import date
-from flask import Flask, render_template, redirect, url_for, abort, flash
+from flask import Flask, render_template, redirect, url_for, abort, flash, request
 from flask_bootstrap import Bootstrap5
 from flask_ckeditor import CKEditor
 from flask_gravatar import Gravatar
@@ -10,14 +10,18 @@ from sqlalchemy import Integer, String, Text, ForeignKey
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 from forms import NewPost, RegisterForm, LoginForm, CommentForm
+import os
+import smtplib
 
 
 today = date.today().strftime("%B %d, %Y")
 year = date.today().strftime("%Y")
+EMAIL = os.environ.get('EMAIL')
+PASSWORD = os.environ.get('PSS')
 
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = '8BYkEfBA6O6donzWlSihBXox7C0sKR6b'
+app.config['SECRET_KEY'] = os.environ.get('FLASK_KEY')
 Bootstrap5(app)
 ckeditor = CKEditor()
 ckeditor.init_app(app)
@@ -67,7 +71,7 @@ def user_only(route):
 # CREATE DATABASE
 class Base(DeclarativeBase):
     pass
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///blog.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DB_URI', 'sqlite:///blog.db')
 db = SQLAlchemy(model_class=Base)
 db.init_app(app)
 
@@ -255,8 +259,21 @@ def about():
     return render_template("about.html", year=year)
 
 
-@app.route("/contact")
+@app.route("/contact", methods=["POST", "GET"])
 def contact():
+    if request.method == "POST":
+        with smtplib.SMTP("smtp.gmail.com") as connection:
+            connection.starttls()
+            connection.login(user=EMAIL, password=PASSWORD)
+            connection.sendmail(
+                from_addr=EMAIL,
+                to_addrs=EMAIL,
+                msg=f"Subject:New Message from themarcoblog.com\n\n"
+                    f"Name: {request.form['name']}\n"
+                    f"Email: {request.form['email']}\n"
+                    f"Phone: {request.form['phone']}\n"
+                    f"Message: {request.form['message']}")
+        return render_template("contact.html", year=year, msg_sent=True)
     return render_template("contact.html", year=year)
 
 
