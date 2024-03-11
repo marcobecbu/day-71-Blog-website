@@ -263,7 +263,7 @@ def about():
 def contact():
     if request.method == "POST":
         with smtplib.SMTP_SSL("smtp-relay.gmail.com") as connection:
-            connection.starttls()
+            # connection.starttls()
             connection.login(user=EMAIL, password=PASSWORD)
             connection.sendmail(
                 from_addr=EMAIL,
