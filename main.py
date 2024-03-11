@@ -262,7 +262,7 @@ def about():
 @app.route("/contact", methods=["POST", "GET"])
 def contact():
     if request.method == "POST":
-        with smtplib.SMTP("smtp.gmail.com") as connection:
+        with smtplib.SMTP_SSL("smtp-relay.gmail.com") as connection:
             connection.starttls()
             connection.login(user=EMAIL, password=PASSWORD)
             connection.sendmail(
